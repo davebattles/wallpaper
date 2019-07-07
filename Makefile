@@ -13,3 +13,4 @@ install: ## install daily-wallpaper
 	sed -i "s|MYHOME|${HOME}|g" _tmp_daily-wallpaper.service
 	sudo mv _tmp_daily-wallpaper.service /etc/systemd/system/daily-wallpaper.service
 	sudo systemctl daemon-reload
+	sudo systemctl enable daily-wallpaper

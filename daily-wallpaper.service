@@ -1,13 +1,13 @@
 [Unit]
 Description=Daily wallaper automation
-Wants=network-online.target
-After=network.target network-online.target
+After=network.target network-online.target netctl-auto@.service
 
 [Service]
-Type=simple
+ExecStartPre=/bin/sleep 30
+Type=oneshot
 Environment=HOME=MYHOME
 Environment=DISPLAY=:0
 ExecStart=GOPATH/bin/daily-wallpaper
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=network-online.target
