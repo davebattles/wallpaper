@@ -7,7 +7,7 @@ ExecStartPre=/bin/sleep 30
 Type=oneshot
 Environment=HOME=MYHOME
 Environment=DISPLAY=:0
-ExecStart=GOPATH/bin/daily-wallpaper
+ExecStart=GOPATH/bin/daily-wallpaper --client-id=UNSPLASH_CLIENT_ID
 
 [Install]
 WantedBy=network-online.target

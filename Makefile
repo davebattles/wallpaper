@@ -10,7 +10,7 @@ install: ## install daily-wallpaper
 	CGO_ENABLED=0 go install
 	cp daily-wallpaper.service _tmp_daily-wallpaper.service
 	sed -i "s|GOPATH|${GOPATH}|g" _tmp_daily-wallpaper.service
-	sed -i "s|MYHOME|${HOME}|g" _tmp_daily-wallpaper.service
+	sed -i "s|UNSPLASH_CLIENT_ID|${UNSPLASH_CLIENT_ID}|g" _tmp_daily-wallpaper.service
 	sudo mv _tmp_daily-wallpaper.service /etc/systemd/system/daily-wallpaper.service
 	sudo systemctl daemon-reload
 	sudo systemctl enable daily-wallpaper

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,64 +11,110 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
 const (
-	sourceURL = "http://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-GB"
-	bingBase  = "https://bing.com"
-	res4k     = "3840x2160"
+	sourceURL = "https://api.unsplash.com/photos/random"
 )
 
-type Meta struct {
-	Images []struct {
-		URL string `json:"url"`
-	} `json:"images"`
+var (
+	ClientID   string
+	Collection string
+)
+
+type Image struct {
+	URLs URLs `json:"urls"`
+}
+
+type URLs struct {
+	Full string `json:"full"`
 }
 
 func main() {
-	resp, err := http.Get(sourceURL)
-	must(err, fmt.Sprintf("failed to fetch source URL %s: ",
-		sourceURL))
-
-	b, err := ioutil.ReadAll(resp.Body)
-	must(err)
-
-	meta := new(Meta)
-
-	must(json.Unmarshal(b, meta))
-
-	if len(meta.Images) == 0 {
-		must(
-			fmt.Errorf("expected at least one image to be returned, got=%d",
-				len(meta.Images),
-			),
-		)
+	if err := RootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(1)
 	}
+}
 
-	url := strings.Replace(meta.Images[0].URL, "1920x1080",
-		res4k, 1)
+func init() {
+	RootCmd.PersistentFlags().StringVarP(&ClientID, "client-id", "i", "", "Client ID used for authorization.")
+	RootCmd.PersistentFlags().StringVarP(&Collection, "collection", "c", "827743", "Collection ID from Unsplash.")
+}
 
-	resp, err = http.Get(bingBase + url)
-	must(err, fmt.Sprintf("failed to fetch image %s: ",
-		bingBase, url))
+var RootCmd = &cobra.Command{
+	Use:   "daily-wallpaper",
+	Short: "Binary to download a random photo and set as wallpaper from an Unsplash Collection.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if ClientID == "" {
+			return errors.New("--client-id is a flag that is required to be set.")
+		}
 
-	b, err = ioutil.ReadAll(resp.Body)
-	must(err)
+		if Collection == "" {
+			return errors.New("--collection must be set to some value.")
+		}
 
-	wallDir := filepath.Join(os.Getenv("HOME"), "wallpapers")
-	must(os.MkdirAll(wallDir, 755))
-	year, month, day := time.Now().Date()
-	path := filepath.Join(
-		wallDir,
-		fmt.Sprintf("%d-%02d-%02d.jpg", year, month, day),
-	)
+		url := fmt.Sprintf("https://api.unsplash.com/photos/random?collections=%s", Collection)
 
-	must(ioutil.WriteFile(path, b, 0644))
-	cmd := exec.Command("feh", "--bg-scale", path)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return fmt.Errorf("failed to build request for unsplash: %s", err)
+		}
 
-	must(cmd.Run())
+		req.Header.Add(
+			"Authorization",
+			fmt.Sprintf("Client-ID %s", ClientID),
+		)
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return fmt.Errorf("failed to fetch source URL %s: %s", url, err)
+		}
+
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		jimage := new(Image)
+		if err := json.Unmarshal(b, jimage); err != nil {
+			return err
+		}
+
+		resp, err = http.Get(jimage.URLs.Full)
+		if err != nil {
+			return fmt.Errorf("failed to fetch image %s: %s",
+				jimage.URLs.Full, err)
+		}
+
+		b, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		wallDir := filepath.Join(os.Getenv("HOME"), "wallpapers")
+		if err := os.MkdirAll(wallDir, 755); err != nil {
+			return err
+		}
+
+		year, month, day := time.Now().Date()
+		path := filepath.Join(
+			wallDir,
+			fmt.Sprintf("%d-%02d-%02d.jpg", year, month, day),
+		)
+
+		if err := ioutil.WriteFile(path, b, 0644); err != nil {
+			return err
+		}
+
+		fehCmd := exec.Command("feh", "--bg-scale", path)
+		fehCmd.Stdout = os.Stdout
+		fehCmd.Stderr = os.Stderr
+
+		return fehCmd.Run()
+	},
 }
 
 func must(err error, preText ...string) {
