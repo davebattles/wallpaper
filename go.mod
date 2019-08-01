@@ -1,4 +1,4 @@
-module github.com/joshvanl/daily-wallpaper
+module github.com/joshvanl/wallpaper
 
 go 1.12
 

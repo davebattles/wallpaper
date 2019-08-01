@@ -3,14 +3,14 @@ help:  ## Display this help
 
 .PHONY: help build install
 
-build: ## build daily-wallpaper
+build: ## build wallpaper
 	CGO_ENABLED=0 go build
 
-install: ## install daily-wallpaper
+install: ## install wallpaper
 	CGO_ENABLED=0 go install
-	cp daily-wallpaper.service _tmp_daily-wallpaper.service
-	sed -i "s|GOPATH|${GOPATH}|g" _tmp_daily-wallpaper.service
-	sed -i "s|UNSPLASH_CLIENT_ID|${UNSPLASH_CLIENT_ID}|g" _tmp_daily-wallpaper.service
-	sudo mv _tmp_daily-wallpaper.service /etc/systemd/system/daily-wallpaper.service
+	cp wallpaper.service _tmp_wallpaper.service
+	sed -i "s|GOPATH|${GOPATH}|g" _tmp_wallpaper.service
+	sed -i "s|UNSPLASH_CLIENT_ID|${UNSPLASH_CLIENT_ID}|g" _tmp_wallpaper.service
+	sudo mv _tmp_wallpaper.service /etc/systemd/system/wallpaper.service
 	sudo systemctl daemon-reload
-	sudo systemctl enable daily-wallpaper
+	sudo systemctl enable wallpaper

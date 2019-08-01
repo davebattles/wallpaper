@@ -45,7 +45,7 @@ func init() {
 }
 
 var RootCmd = &cobra.Command{
-	Use:   "daily-wallpaper",
+	Use:   "wallpaper",
 	Short: "Binary to download a random photo and set as wallpaper from an Unsplash Collection.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if ClientID == "" {
