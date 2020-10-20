@@ -95,7 +95,7 @@ var RootCmd = &cobra.Command{
 		}
 
 		wallDir := filepath.Join(os.Getenv("HOME"), "wallpapers")
-		if err := os.MkdirAll(wallDir, 755); err != nil {
+		if err := os.MkdirAll(wallDir, 0755); err != nil {
 			return err
 		}
 
