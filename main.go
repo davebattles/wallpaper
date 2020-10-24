@@ -109,11 +109,11 @@ var RootCmd = &cobra.Command{
 			return err
 		}
 
-		fehCmd := exec.Command("feh", "--bg-scale", path)
-		fehCmd.Stdout = os.Stdout
-		fehCmd.Stderr = os.Stderr
-
-		return fehCmd.Run()
+        walCmd := exec.Command("wal", "-i", path)
+        walCmd.Stdout = os.Stdout
+        walCmd.Stderr = os.Stderr
+        
+		return walCmd.Run()
 	},
 }
 
